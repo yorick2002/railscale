@@ -1,0 +1,10 @@
+[package]
+name = "rail_proto"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+async-trait = {workspace = true}
+tokio = {workspace = true}
+tokio-stream = {workspace = true}
+# rsnet = "0.1"  # uncomment once published to crates.io
