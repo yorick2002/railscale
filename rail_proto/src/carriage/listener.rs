@@ -11,7 +11,7 @@ pub enum IngressSource {
 
 
 #[async_trait::async_trait]
-pub trait CarriageListener {
+pub trait CarriageDoor {
     type Ingress: AsyncWrite + AsyncRead + Send + Sync + Unpin;
     type IngressStream: Stream<Item = Self::Ingress>;
     type Error: Error;
