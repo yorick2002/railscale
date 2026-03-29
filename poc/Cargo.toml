@@ -1,0 +1,13 @@
+[package]
+name = "poc"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+tokio = { workspace = true }
+tokio-stream = { workspace = true }
+tokio-util = { workspace = true }
+bytes = { workspace = true }
+memchr = { workspace = true }
+pin-project-lite = { workspace = true }
+rayon = { workspace = true }

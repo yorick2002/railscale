@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-use std::io::BufRead;
 use std::pin::Pin;
 use std::task::{Context, Poll};
 use bytes::{Bytes, BytesMut};
@@ -8,7 +6,7 @@ use pin_project_lite::pin_project;
 use tokio::io::AsyncRead;
 use tokio_stream::Stream;
 use tokio_util::codec::FramedRead;
-use crate::meta_codec::{HttpFrame, HttpStreamingCodec};
+use crate::codec::{HttpFrame, HttpStreamingCodec};
 
 #[derive(Debug)]
 pub enum MappedFrame {

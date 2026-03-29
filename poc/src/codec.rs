@@ -1,9 +1,7 @@
-use std::collections::HashMap;
-use std::io::Read;
 use bytes::{Buf, Bytes, BytesMut};
 use memchr::memmem::Finder;
-use tokio_util::codec::Decoder;
 use rayon::prelude::*;
+use tokio_util::codec::Decoder;
 
 fn find_crlf(buf: &[u8]) -> Option<usize> {
     let mut start = 0;
@@ -23,7 +21,7 @@ fn find_crlf(buf: &[u8]) -> Option<usize> {
 
 pub struct HttpStreamingCodec {
     done: bool,
-    pub matchers: Vec<(Finder<'static>, Bytes)>
+    pub matchers: Vec<(Finder<'static>, Bytes)>,
 }
 
 impl HttpStreamingCodec {
@@ -45,7 +43,6 @@ impl Decoder for HttpStreamingCodec {
         if self.done || src.is_empty() {
             return Ok(None);
         }
-
 
         match find_crlf(src) {
             Some(0) => {
@@ -73,4 +70,3 @@ impl Decoder for HttpStreamingCodec {
         }
     }
 }
-
