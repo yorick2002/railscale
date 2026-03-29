@@ -41,6 +41,7 @@ impl Decoder for HttpStreamingCodec {
     type Item = HttpFrame;
     type Error = io::Error;
 
+    #[hotpath::measure]
     fn decode_eof(&mut self, buf: &mut BytesMut) -> Result<Option<Self::Item>, Self::Error> {
         if self.done {
             return Ok(None);
@@ -48,6 +49,7 @@ impl Decoder for HttpStreamingCodec {
         self.decode(buf)
     }
 
+    #[hotpath::measure]
     fn decode(&mut self, src: &mut BytesMut) -> Result<Option<Self::Item>, io::Error> {
         if self.done || src.is_empty() {
             return Ok(None);
@@ -57,7 +59,7 @@ impl Decoder for HttpStreamingCodec {
             Some(0) => {
                 src.advance(2);
                 self.done = true;
-                Ok(None)
+                Ok(Some(HttpFrame::end_of_headers()))
             }
             Some(pos) => {
                 let is_request_line = self.first_line;

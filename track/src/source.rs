@@ -1,9 +1,10 @@
-use tokio::io::AsyncRead;
+use tokio::io::{AsyncRead, AsyncWrite};
 use crate::RailscaleError;
 
 pub trait StreamSource: Send {
-    type Stream: AsyncRead + Send + Unpin;
+    type ReadHalf: AsyncRead + Send + Unpin;
+    type WriteHalf: AsyncWrite + Send + Unpin;
     type Error: Into<RailscaleError>;
 
-    fn accept(&self) -> impl std::future::Future<Output = Result<Self::Stream, Self::Error>> + Send;
+    fn accept(&self) -> impl std::future::Future<Output = Result<(Self::ReadHalf, Self::WriteHalf), Self::Error>> + Send;
 }

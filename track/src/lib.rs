@@ -3,6 +3,7 @@ mod error;
 mod frame;
 mod parser;
 mod pipeline;
+pub mod sampler;
 mod service;
 mod source;
 

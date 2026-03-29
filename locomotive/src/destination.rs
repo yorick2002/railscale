@@ -1,36 +1,42 @@
-use std::net::SocketAddr;
 use bytes::Bytes;
-use tokio::io::AsyncWriteExt;
+use tokio::io::{AsyncWrite, AsyncWriteExt};
 use tokio::net::TcpStream;
 use train_track::{Frame, StreamDestination};
 use crate::HttpFrame;
 
 pub struct TcpDestination {
     upstream: Option<TcpStream>,
+    fixed_addr: Option<String>,
+    headers_sent: bool,
 }
 
+#[hotpath::measure_all]
 impl TcpDestination {
     pub fn new() -> Self {
-        Self { upstream: None }
+        Self { upstream: None, fixed_addr: None, headers_sent: false }
     }
 
-    pub async fn provide_with_addr(&mut self, addr: &SocketAddr) -> Result<(), std::io::Error> {
-        let stream = TcpStream::connect(addr).await?;
-        self.upstream = Some(stream);
-        Ok(())
+    pub fn with_fixed_upstream(addr: impl Into<String>) -> Self {
+        Self { upstream: None, fixed_addr: Some(addr.into()), headers_sent: false }
     }
 }
 
+#[hotpath::measure_all]
 impl StreamDestination for TcpDestination {
     type Frame = HttpFrame;
     type Error = std::io::Error;
 
     async fn provide(&mut self, routing_frame: &Self::Frame) -> Result<(), Self::Error> {
-        let line = routing_frame.as_bytes();
-        let host = extract_host(line).ok_or_else(|| {
-            std::io::Error::new(std::io::ErrorKind::InvalidData, "no host in routing frame")
-        })?;
-        let stream = TcpStream::connect(host).await?;
+        let host = match &self.fixed_addr {
+            Some(addr) => addr.clone(),
+            None => {
+                let line = routing_frame.as_bytes();
+                extract_host(line).ok_or_else(|| {
+                    std::io::Error::new(std::io::ErrorKind::InvalidData, "no host in routing frame")
+                })?
+            }
+        };
+        let stream = TcpStream::connect(&host).await?;
         self.upstream = Some(stream);
         Ok(())
     }
@@ -39,14 +45,27 @@ impl StreamDestination for TcpDestination {
         let upstream = self.upstream.as_mut().ok_or_else(|| {
             std::io::Error::new(std::io::ErrorKind::NotConnected, "not routed")
         })?;
-        upstream.write_all(frame.as_bytes()).await
+        upstream.write_all(frame.as_bytes()).await?;
+        upstream.write_all(b"\r\n").await
     }
 
     async fn write_raw(&mut self, bytes: Bytes) -> Result<(), Self::Error> {
         let upstream = self.upstream.as_mut().ok_or_else(|| {
             std::io::Error::new(std::io::ErrorKind::NotConnected, "not routed")
         })?;
+        if !self.headers_sent {
+            upstream.write_all(b"\r\n").await?;
+            self.headers_sent = true;
+        }
         upstream.write_all(&bytes).await
+    }
+
+    async fn relay_response<W: AsyncWrite + Send + Unpin>(&mut self, client: &mut W) -> Result<u64, Self::Error> {
+        let upstream = self.upstream.as_mut().ok_or_else(|| {
+            std::io::Error::new(std::io::ErrorKind::NotConnected, "not routed")
+        })?;
+        upstream.shutdown().await?;
+        tokio::io::copy(upstream, client).await
     }
 }
 

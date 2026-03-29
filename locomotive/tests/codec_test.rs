@@ -1,6 +1,6 @@
 use bytes::BytesMut;
 use tokio_util::codec::Decoder;
-use locomotive::HttpStreamingCodec;
+use locomotive::{HttpStreamingCodec, HttpFrame};
 use train_track::Frame;
 
 #[test]
@@ -27,8 +27,8 @@ fn detects_end_of_headers() {
     let mut codec = HttpStreamingCodec::new(vec![]);
     let mut buf = BytesMut::from("GET /\r\n\r\n");
     let _ = codec.decode(&mut buf).unwrap();
-    let end = codec.decode(&mut buf).unwrap();
-    assert!(end.is_none());
+    let end = codec.decode(&mut buf).unwrap().unwrap();
+    assert!(end.is_end_of_headers());
     assert!(codec.headers_done());
 }
 

@@ -28,44 +28,57 @@ pin_project! {
     }
 }
 
+fn drain_buffer<T: AsyncRead + Unpin>(
+    inner: &mut FramedRead<T, HttpStreamingCodec>,
+) -> Option<ParsedData<HttpFrame>> {
+    let buf = inner.read_buffer_mut();
+    if !buf.is_empty() {
+        let chunk = buf.split();
+        Some(ParsedData::Passthrough(chunk.freeze()))
+    } else {
+        None
+    }
+}
+
+#[hotpath::measure_all]
 impl<T: AsyncRead + Unpin> Stream for HttpFrameStream<T> {
     type Item = Result<ParsedData<HttpFrame>, std::io::Error>;
 
     fn poll_next(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
         let mut this = self.project();
+        let inner = this.inner.as_mut().get_mut();
 
         if *this.headers_done {
-            let buf = this.inner.get_mut().read_buffer_mut();
-            if !buf.is_empty() {
-                let chunk = buf.split();
-                return Poll::Ready(Some(Ok(ParsedData::Passthrough(chunk.freeze()))));
-            }
-            return Poll::Ready(None);
+            return match drain_buffer(inner) {
+                Some(data) => Poll::Ready(Some(Ok(data))),
+                None => Poll::Ready(None),
+            };
         }
 
-        match this.inner.as_mut().poll_next(cx) {
+        match Pin::new(&mut *inner).poll_next(cx) {
             Poll::Ready(Some(Ok(frame))) => {
+                if frame.is_end_of_headers() {
+                    *this.headers_done = true;
+                    return match drain_buffer(inner) {
+                        Some(data) => Poll::Ready(Some(Ok(data))),
+                        None => Poll::Ready(None),
+                    };
+                }
                 Poll::Ready(Some(Ok(ParsedData::Parsed(frame))))
             }
             Poll::Ready(Some(Err(e))) => Poll::Ready(Some(Err(e))),
-            Poll::Ready(None) => {
-                *this.headers_done = true;
-                let buf = this.inner.get_mut().read_buffer_mut();
-                if !buf.is_empty() {
-                    let chunk = buf.split();
-                    return Poll::Ready(Some(Ok(ParsedData::Passthrough(chunk.freeze()))));
-                }
-                Poll::Ready(None)
-            }
+            Poll::Ready(None) => Poll::Ready(None),
             Poll::Pending => Poll::Pending,
         }
     }
 }
 
+#[hotpath::measure_all]
 impl<S: AsyncRead + Send + Unpin> FrameParser<S> for HttpParser {
     type Frame = HttpFrame;
     type Error = std::io::Error;
 
+    #[hotpath::measure]
     fn parse(&mut self, stream: S) -> impl Stream<Item = Result<ParsedData<Self::Frame>, Self::Error>> + Send {
         let codec = HttpStreamingCodec::new(self.matchers.clone());
         HttpFrameStream {
