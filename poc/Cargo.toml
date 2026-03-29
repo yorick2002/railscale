@@ -11,3 +11,9 @@ bytes = { workspace = true }
 memchr = { workspace = true }
 pin-project-lite = { workspace = true }
 rayon = { workspace = true }
+hotpath = "0.14"
+
+
+[features]
+hotpath = ["hotpath/hotpath"]
+hotpath-alloc = ["hotpath/hotpath-alloc"]
