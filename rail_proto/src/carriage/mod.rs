@@ -1,9 +1,9 @@
-pub mod listener;
-pub mod manifest;
-pub mod gate;
-pub mod disembark;
-pub mod ticket_pipeline;
-pub mod passengers;
+pub use rail_carriage::door;
+pub use rail_carriage::manifest;
+pub use rail_carriage::gate;
+pub use rail_carriage::disembark;
+pub use rail_carriage::ticket_pipeline;
+pub use rail_carriage::passengers;
 
 #[cfg(not(feature = "tailscale"))]
 pub mod nontailscale;

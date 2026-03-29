@@ -5,7 +5,7 @@ edition = "2024"
 
 [features]
 default = []
-tailscale = []  # enable once rsnet is wired in
+tailscale = []
 
 [[bin]]
 name = "railscale"
@@ -17,8 +17,14 @@ tokio = {workspace = true}
 tokio-stream = {workspace = true}
 tokio-util = {workspace = true}
 bytes = {workspace = true}
-# rsnet = "0.1"  # uncomment once published to crates.io
+tracing = {workspace = true}
+tracing-subscriber = {workspace = true}
+rail_turnout = {path = "../rail_turnout"}
+rail_carriage = {path = "../rail_carriage"}
+# rsnet = "0.1"
 
 [dev-dependencies]
 proptest = {workspace = true}
 tokio = {workspace = true}
+rail_carriage = {path = "../rail_carriage"}
+rail_turnout = {path = "../rail_turnout"}

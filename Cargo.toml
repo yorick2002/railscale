@@ -1,5 +1,5 @@
 [workspace]
-members = ["rail_proto"]
+members = ["rail_proto", "rail_turnout", "rail_carriage"]
 resolver = "3"
 
 
@@ -9,5 +9,10 @@ tokio = {version = "1.50.0", features = ["full"]}
 tokio-stream = {version = "0.1.18"}
 tokio-util = {version = "0.7.18", features = ["codec"]}
 bytes = "1"
+memchr = "2"
+pin-project-lite = "0.2"
 rsnet={version = "0.1.0"}
 proptest = "1"
+tracing = "0.1"
+tracing-subscriber = "0.3"
+rayon = "1.11.0"

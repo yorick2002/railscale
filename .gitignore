@@ -22,3 +22,6 @@ Cargo.lock
 .idea/
 .agents
 .claude
+
+# AgentOps session artifacts
+.agents/

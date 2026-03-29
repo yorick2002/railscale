@@ -1,8 +1,8 @@
 use bytes::BytesMut;
 use tokio_util::codec::Decoder;
 
-use rail_proto::carriage::passengers::tls::TlsPassenger;
-use rail_proto::carriage::ticket_pipeline::{BufferedField, PassengerDecoder, TicketField};
+use rail_carriage::passengers::tls::TlsPassenger;
+use rail_carriage::ticket_pipeline::{BufferedField, PassengerDecoder, TicketField};
 
 fn always_buffer(_: &[u8]) -> bool { true }
 fn never_buffer(_: &[u8]) -> bool { false }

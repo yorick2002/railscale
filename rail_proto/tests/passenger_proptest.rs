@@ -2,10 +2,10 @@ use bytes::BytesMut;
 use proptest::prelude::*;
 use tokio_util::codec::Decoder;
 
-use rail_proto::carriage::passengers::http::HttpPassenger;
-use rail_proto::carriage::passengers::tcp::TcpPassenger;
-use rail_proto::carriage::passengers::tls::TlsPassenger;
-use rail_proto::carriage::ticket_pipeline::{PassengerDecoder, TicketField};
+use rail_carriage::passengers::http::HttpPassenger;
+use rail_carriage::passengers::tcp::TcpPassenger;
+use rail_carriage::passengers::tls::TlsPassenger;
+use rail_carriage::ticket_pipeline::{PassengerDecoder, TicketField};
 
 fn always_buffer(_: &[u8]) -> bool { true }
 fn never_buffer(_: &[u8]) -> bool { false }
@@ -233,7 +233,7 @@ proptest! {
         prop_assert!(buf.is_empty());
 
         // verify record was the right size
-        if let Some(TicketField::Buffered(rail_proto::carriage::ticket_pipeline::BufferedField::Bytes(b))) = result {
+        if let Some(TicketField::Buffered(rail_carriage::ticket_pipeline::BufferedField::Bytes(b))) = result {
             prop_assert_eq!(b.len(), total_len);
         }
     }
